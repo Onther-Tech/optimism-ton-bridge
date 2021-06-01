@@ -1,5 +1,7 @@
 artifacts/
+artifacts-ovm/
 bin/
 cache/
+cache-ovm/
 .env
 node_modules/
