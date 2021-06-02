@@ -4,9 +4,10 @@ pragma abicoder v2;
 import {
     OVM_L1CrossDomainMessenger
 } from "@eth-optimism/contracts/build/contracts/OVM/bridge/messaging/OVM_L1CrossDomainMessenger.sol";
+import {
+    OVM_L2CrossDomainMessenger
+} from "@eth-optimism/contracts/build/contracts/OVM/bridge/messaging/OVM_L2CrossDomainMessenger.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-
-contract OVM_L1CrossDomainMessengerLocal is OVM_L1CrossDomainMessenger {}
 
 contract L1TON is ERC20 {
     constructor() ERC20("Tokamak Network Token", "TON") {}
@@ -38,5 +39,37 @@ contract L1TON is ERC20 {
 }
 
 contract L2TON is ERC20 {
-    constructor() ERC20("Tokamak Network Token", "TON") {}
+    // --- Auth ---
+    mapping(address => bool) public authorized;
+
+    function rely(address usr) external auth {
+        authorized[usr] = true;
+        emit Rely(usr);
+    }
+
+    function deny(address usr) external auth {
+        authorized[usr] = false;
+        emit Deny(usr);
+    }
+
+    modifier auth {
+        require(authorized[msg.sender], "L2TON/not-authorized");
+        _;
+    }
+
+    event Rely(address indexed usr);
+    event Deny(address indexed usr);
+
+    constructor() ERC20("Tokamak Network Token", "TON") {
+        authorized[msg.sender] = true;
+        emit Rely(msg.sender);
+    }
+
+    function mint(address account, uint256 amount) external auth {
+        super._mint(account, amount);
+    }
+
+    function burn(address account, uint256 amount) external {
+        super._burn(account, amount);
+    }
 }

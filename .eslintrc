@@ -45,6 +45,7 @@
     "no-redeclare": ["error", {"builtinGlobals": true}],
     "no-trailing-spaces": ["error", { "skipBlankLines": false }],
     "no-undef": "error",
+    "no-unused-vars": ["error", { "varsIgnorePattern": "^_" }],
     "no-use-before-define": "off",
     "no-var": "error",
     "object-curly-spacing": ["error", "always"],
