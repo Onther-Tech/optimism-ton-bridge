@@ -284,7 +284,7 @@ async function setupTest (
     'OVM_L1CrossDomainMessenger',
     l1MessengerImpersonator.address,
   );
-  const l1TON = await deploy('L1TON', []);
+  const l1TON = await deploy('L1TON');
   const l1Gateway = await deploy('L1Gateway', [
     l1TON.address,
     l2GatewayMock.address,

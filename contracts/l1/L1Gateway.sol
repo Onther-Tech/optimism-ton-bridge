@@ -46,10 +46,10 @@ contract L1Gateway is Abs_L1TokenGateway {
 
     constructor(
         TokenLike _l1ERC20,
-        address _l2ERC20,
+        address _l2Gateway,
         address _l1Messenger,
         address _escrow
-    ) Abs_L1TokenGateway(_l2ERC20, _l1Messenger) {
+    ) Abs_L1TokenGateway(_l2Gateway, _l1Messenger) {
         authorized[msg.sender] = true;
         emit Rely(msg.sender);
 

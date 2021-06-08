@@ -213,7 +213,7 @@ describe('L2Gateway', () => {
       await expect(l2Gateway.init(acc3.address)).to.be.revertedWith(errorMessages.alreadyInitialized);
     });
 
-    it('doesn`t allow calls to onlyInitialized functions before initialization', async () => {
+    it('doesn\'t allow calls to onlyInitialized functions before initialization', async () => {
       const [acc1, acc2, acc3] = await ethers.getSigners();
 
       const l2Gateway = await deploy('L2Gateway', [acc1.address, acc2.address]);
@@ -269,7 +269,7 @@ async function setupTest (l2MessengerImpersonator) {
     'OVM_L2CrossDomainMessenger',
     l2MessengerImpersonator.address,
   );
-  const l2TON = await deploy('L2TON', []);
+  const l2TON = await deploy('L2TON');
   const l2Gateway = await deploy('L2Gateway', [l2CrossDomainMessengerMock.address, l2TON.address]);
   const l1GatewayMock = await deployMock('L1Gateway');
 

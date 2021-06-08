@@ -6,7 +6,7 @@ async function deploy (
   args,
 ) {
   const factory = (await ethers.getContractFactory(name));
-  return factory.deploy(...args);
+  return factory.deploy(...(args || []));
 }
 
 async function deployMock (
