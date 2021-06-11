@@ -9,7 +9,7 @@
     "lint:js": "eslint --ignore-path .gitignore .",
     "lint:js:fix": "eslint --ignore-path .gitignore . --fix",
     "lint:sol": "solhint 'contracts/**/*.sol'",
-    "compile": "hardhat compile",
+    "compile": "hardhat compile && hardhat compile --network optimism",
     "test": "hardhat test"
   },
   "keywords": [],
