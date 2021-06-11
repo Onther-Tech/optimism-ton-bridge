@@ -3,7 +3,7 @@ const { JsonRpcProvider } = require('@ethersproject/providers');
 const { deploy, deployGatewayAndRegister } = require('./common');
 require('dotenv').config; // eslint-disable-line
 
-// needs to key to deploy contracts
+// needs key to deploy contracts
 if (!process.env.ALCHEMY_API_KEY ||
     !process.env.KOVAN_DEPLOYER_PRIV_KEY ||
     !process.env.L2_DEPLOYER_PRIV_KEY
