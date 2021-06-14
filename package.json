@@ -10,6 +10,7 @@
     "lint:js:fix": "eslint --ignore-path .gitignore . --fix",
     "lint:sol": "solhint 'contracts/**/*.sol'",
     "compile": "hardhat compile && hardhat compile --network optimism",
+    "deploy:kovan": "hardhat run scripts/deployKovan.js --network kovan",
     "test": "hardhat test"
   },
   "keywords": [],
