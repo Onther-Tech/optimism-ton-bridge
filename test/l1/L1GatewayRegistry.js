@@ -20,8 +20,8 @@ describe('L1GatewayRegistry', () => {
       const l1GatewayRegistry = await deploy('L1GatewayRegistry');
 
       await l1GatewayRegistry.register(gateway0, gateway1);
-      expect(await l1GatewayRegistry.registered(gateway0, gateway1)).to.be.eq(true);
-      expect(await l1GatewayRegistry.registered(gateway1, gateway0)).to.be.eq(false);
+      expect(await l1GatewayRegistry.isRegistered(gateway0, gateway1)).to.be.eq(true);
+      expect(await l1GatewayRegistry.isRegistered(gateway1, gateway0)).to.be.eq(true);
     });
 
     it('emits GatewayRegistered event', async () => {
