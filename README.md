@@ -19,7 +19,7 @@ An owner calls L2Gateway.close() and L1Gateway.close() so no new async messages 
 
 ## Scrips
 
-These scrips require valid .env file. Copy .env.example as .env and fill it out.
+These scrips require valid `.env` file. Copy `.env.example` as `.env` and fill it out.
 
 - `scripts/deployKovan.js` - deploys a full solution to kovan and optimism testnet on kovan. Run with `npm run deploy:kovan`
 
