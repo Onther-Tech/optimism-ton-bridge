@@ -69,7 +69,7 @@ contract L2TON is ERC20 {
         super._mint(account, amount);
     }
 
-    function burn(address account, uint256 amount) external {
+    function burn(address account, uint256 amount) external auth {
         super._burn(account, amount);
     }
 }
