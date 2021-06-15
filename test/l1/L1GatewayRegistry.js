@@ -15,54 +15,53 @@ const upperAddress = ethers.utils.getAddress('0x' + 'f'.repeat(40));
 describe('L1GatewayRegistry', () => {
   describe('register()', () => {
     it('registers gateway0 and gateway1', async () => {
-      const gateway0 = address;
-      const gateway1 = upperAddress;
+      const l1Gateway = address;
+      const l2Gateway = upperAddress;
       const l1GatewayRegistry = await deploy('L1GatewayRegistry');
 
-      await l1GatewayRegistry.register(gateway0, gateway1);
-      expect(await l1GatewayRegistry.isRegistered(gateway0, gateway1)).to.be.eq(true);
-      expect(await l1GatewayRegistry.isRegistered(gateway1, gateway0)).to.be.eq(true);
+      await l1GatewayRegistry.register(l1Gateway, l2Gateway);
+      expect(await l1GatewayRegistry.registered(l1Gateway, l2Gateway)).to.be.eq(true);
     });
 
     it('emits GatewayRegistered event', async () => {
-      const gateway0 = address;
-      const gateway1 = upperAddress;
+      const l1Gateway = address;
+      const l2Gateway = upperAddress;
       const l1GatewayRegistry = await deploy('L1GatewayRegistry');
 
-      await expect(l1GatewayRegistry.register(gateway0, gateway1))
+      await expect(l1GatewayRegistry.register(l1Gateway, l2Gateway))
         .to.emit(l1GatewayRegistry, 'GatewayRegistered')
-        .withArgs(gateway0, gateway1);
+        .withArgs(l1Gateway, l2Gateway);
     });
 
     it('reverts when using identical address', async () => {
-      const gateway0 = address;
-      const gateway1 = address;
+      const l1Gateway = address;
+      const l2Gateway = address;
       const l1GatewayRegistry = await deploy('L1GatewayRegistry');
 
       await expect(
-        l1GatewayRegistry.register(gateway0, gateway1),
+        l1GatewayRegistry.register(l1Gateway, l2Gateway),
       ).to.be.revertedWith(errorMessages.identicalAddress);
     });
 
     it('reverts when using zero address', async () => {
-      const gateway0 = address;
-      const gateway1 = zeroAddress;
+      const l1Gateway = address;
+      const l2Gateway = zeroAddress;
       const l1GatewayRegistry = await deploy('L1GatewayRegistry');
 
       await expect(
-        l1GatewayRegistry.register(gateway0, gateway1),
+        l1GatewayRegistry.register(l1Gateway, l2Gateway),
       ).to.be.revertedWith(errorMessages.zeroAddress);
     });
 
     it('reverts when gateway is already registered', async () => {
-      const gateway0 = address;
-      const gateway1 = upperAddress;
+      const l1Gateway = address;
+      const l2Gateway = upperAddress;
       const l1GatewayRegistry = await deploy('L1GatewayRegistry');
 
-      await l1GatewayRegistry.register(gateway0, gateway1);
+      await l1GatewayRegistry.register(l1Gateway, l2Gateway);
 
       await expect(
-        l1GatewayRegistry.register(gateway0, gateway1),
+        l1GatewayRegistry.register(l1Gateway, l2Gateway),
       ).to.be.revertedWith(errorMessages.alreadyRegistered);
     });
   });
