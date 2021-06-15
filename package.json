@@ -11,6 +11,7 @@
     "lint:sol": "solhint 'contracts/**/*.sol'",
     "compile": "hardhat compile && hardhat compile --network optimism",
     "deploy:kovan": "hardhat run scripts/deployKovan.js --network kovan",
+    "deploy:rinkeby": "hardhat run scripts/deployRinkeby.js --network rinkeby",
     "test": "hardhat test"
   },
   "keywords": [],
