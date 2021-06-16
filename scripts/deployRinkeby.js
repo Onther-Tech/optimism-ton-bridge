@@ -24,8 +24,8 @@ const L2_TX_OPTS = {
   gasPrice: 0,
 };
 
-const L1_XDOMAIN_MESSENGER_ADDRESS = '0xaFD9bB316D38aBB0400a53963A9324AB26eda97C';
-const L2_XDOMAIN_MESSENGER_ADDRESS = '0x4200000000000000000000000000000000000007';
+const L1_MESSENGER_ADDRESS = process.env.L1_MESSENGER_ADDRESS;
+const L2_MESSENGER_ADDRESS = process.env.L2_MESSENGER_ADDRESS;
 
 async function main () {
   console.log('Deploying on Rinkeby');
@@ -37,17 +37,15 @@ async function main () {
 
   const L1_TON_ADDRESS = process.env.L1_TON_ADDRESS || await deploy(l1Deployer, 'L1TON', L1_TX_OPTS);
   const L1_ESCROW_ADDRESS = process.env.L1_ESCROW_ADDRESS || await deploy(l1Deployer, 'L1Escrow', L1_TX_OPTS);
-  const L1_GATEWAY_REGISTRY_ADDRESS = process.env.L1_GATEWAY_REGISTRY_ADDRESS ||
-                                      await deploy(l1Deployer, 'L1GatewayRegistry', L1_TX_OPTS);
+  process.env.L1_GATEWAY_REGISTRY_ADDRESS || await deploy(l1Deployer, 'L1GatewayRegistry', L1_TX_OPTS);
 
   await deployGatewayAndRegister(
     l1Deployer,
     l2Deployer,
     L1_TON_ADDRESS,
     L1_ESCROW_ADDRESS,
-    L1_GATEWAY_REGISTRY_ADDRESS,
-    L1_XDOMAIN_MESSENGER_ADDRESS,
-    L2_XDOMAIN_MESSENGER_ADDRESS,
+    L1_MESSENGER_ADDRESS,
+    L2_MESSENGER_ADDRESS,
     L1_TX_OPTS,
     L2_TX_OPTS,
   );
