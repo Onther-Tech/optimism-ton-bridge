@@ -32,6 +32,28 @@ async function getL2ContractFactory (name) {
   return new ethers.ContractFactory(artifact.abi, artifact.bytecode);
 }
 
+async function getContractAt (address, name, signerOrProvider) {
+  const artifact = await ethers.getContractFactory(name);
+  return new ethers.Contract(address, artifact.interface, signerOrProvider);
+}
+
+async function getL2ContractAt (address, name, signerOrProvider) {
+  const l1ArtifactPaths = await artifacts.getArtifactPaths();
+  const desiredArtifacts = l1ArtifactPaths.filter((a) => a.endsWith(`/${name}.json`));
+  if (desiredArtifacts.length !== 1) {
+    console.error('Couldn\'t find desired artifact or found too many');
+  }
+
+  const l1ArtifactPath = desiredArtifacts[0];
+  const artifactRootPath = join(__dirname, '../../artifacts');
+  const artifactOvmRootPath = join(__dirname, '../../artifacts-ovm');
+  const l2ArtifactPath = l1ArtifactPath.replace(artifactRootPath, artifactOvmRootPath);
+
+  const artifact = JSON.parse(readFileSync(l2ArtifactPath, 'utf-8'));
+
+  return new ethers.Contract(address, artifact.abi, signerOrProvider);
+}
+
 async function waitForTx (tx) {
   const resolvedTx = await tx;
   return await resolvedTx.wait();
@@ -40,5 +62,7 @@ async function waitForTx (tx) {
 module.exports = {
   deployContract,
   getL2ContractFactory,
+  getContractAt,
+  getL2ContractAt,
   waitForTx,
 };
