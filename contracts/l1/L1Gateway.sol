@@ -4,7 +4,7 @@ pragma solidity >=0.7.6;
 
 import {
     Abs_L1TokenGateway
-} from "@eth-optimism/contracts/build/contracts/OVM/bridge/tokens/Abs_L1TokenGateway.sol";
+} from "@eth-optimism/contracts/OVM/bridge/tokens/Abs_L1TokenGateway.sol";
 
 interface TokenLike {
     function transfer(address _to, uint256 _value)

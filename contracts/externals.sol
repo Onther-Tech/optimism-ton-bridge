@@ -3,11 +3,12 @@ pragma abicoder v2;
 
 import {
     OVM_L1CrossDomainMessenger
-} from "@eth-optimism/contracts/build/contracts/OVM/bridge/messaging/OVM_L1CrossDomainMessenger.sol";
+} from "@eth-optimism/contracts/OVM/bridge/messaging/OVM_L1CrossDomainMessenger.sol";
+
 import {
     OVM_L2CrossDomainMessenger
-} from "@eth-optimism/contracts/build/contracts/OVM/bridge/messaging/OVM_L2CrossDomainMessenger.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+} from "@eth-optimism/contracts/OVM/bridge/messaging/OVM_L2CrossDomainMessenger.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract L1TON is ERC20 {
     constructor() ERC20("Tokamak Network Token", "TON") {}

@@ -21,8 +21,11 @@ module.exports = {
       accounts: [`0x${RINKEBY_DEPLOYER_PRIV_KEY}`],
     },
     optimism: {
-      url: '',
+      url: 'https://testnet1.optimism.tokamak.network',
       ovm: true,
     },
+  },
+  mocha: {
+    timeout: 60000,
   },
 };
