@@ -93,9 +93,9 @@ async function main () {
   }
 
   console.log(`
-====================
+=====================
 before deposit 👇👇👇
-====================
+=====================
 L1TON
 👉 user: ${(await l1TON.balanceOf(user)).toString()}
 👉 escrow: ${(await l1TON.balanceOf(l1Escrow.address)).toString()}
@@ -109,13 +109,14 @@ L2TON
   await l1Tx.wait();
 
   // https://snyk.io/advisor/npm-package/@eth-optimism/watcher#package-footer
+  console.log('Waiting for deposit to be relayed to L2...');
   const [ messageHash ] = await watcher.getMessageHashesFromL1Tx(l1Tx.hash);
   await watcher.getL2TransactionReceipt(messageHash);
 
   console.log(`
-====================
+=====================
 after deposit 👇👇👇
-====================
+=====================
 L1TON
 👉 user: ${(await l1TON.balanceOf(user)).toString()}
 👉 escrow: ${(await l1TON.balanceOf(l1Escrow.address)).toString()}

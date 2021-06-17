@@ -69,6 +69,7 @@ L2TON
   await l2Tx.wait();
 
   // https://snyk.io/advisor/npm-package/@eth-optimism/watcher#package-footer
+  console.log('Waiting for withdrawal to be relayed to L1...');
   const [ messageHash ] = await watcher.getMessageHashesFromL2Tx(l2Tx.hash);
   await watcher.getL1TransactionReceipt(messageHash);
 
