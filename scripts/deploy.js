@@ -3,19 +3,23 @@ const { JsonRpcProvider } = require('@ethersproject/providers');
 const { deploy, deployGatewayAndRegister } = require('./common');
 require('dotenv').config; // eslint-disable-line
 
-// needs key to deploy contracts
-if (!process.env.ALCHEMY_API_KEY ||
-    !process.env.RINKEBY_DEPLOYER_PRIV_KEY ||
-    !process.env.L2_DEPLOYER_PRIV_KEY
+if (!process.env.L1_DEPLOYER_PRIV_KEY ||
+    !process.env.L2_DEPLOYER_PRIV_KEY ||
+    !process.env.L1_MESSENGER_ADDRESS ||
+    !process.env.L2_MESSENGER_ADDRESS
 ) {
+  console.log('Copy .env.example as .env and fill it out...');
   process.exit(1);
 }
 
 const L1_RPC_URL = 'https://rinkeby.rpc.tokamak.network/';
 const L2_RPC_URL = 'https://testnet1.optimism.tokamak.network/';
 
-const L1_DEPLOYER_PRIV_KEY = process.env.RINKEBY_DEPLOYER_PRIV_KEY;
+const L1_DEPLOYER_PRIV_KEY = process.env.L1_DEPLOYER_PRIV_KEY;
 const L2_DEPLOYER_PRIV_KEY = process.env.L2_DEPLOYER_PRIV_KEY;
+
+const L1_MESSENGER_ADDRESS = process.env.L1_MESSENGER_ADDRESS;
+const L2_MESSENGER_ADDRESS = process.env.L2_MESSENGER_ADDRESS;
 
 const L1_TX_OPTS = {
   gasPrice: 1000000000, // 1 gwei
@@ -24,11 +28,8 @@ const L2_TX_OPTS = {
   gasPrice: 0,
 };
 
-const L1_MESSENGER_ADDRESS = process.env.L1_MESSENGER_ADDRESS;
-const L2_MESSENGER_ADDRESS = process.env.L2_MESSENGER_ADDRESS;
-
 async function main () {
-  console.log('Deploying on Rinkeby');
+  console.log('Deploying...');
   const l1Provider = new JsonRpcProvider(L1_RPC_URL);
   const l1Deployer = new ethers.Wallet(L1_DEPLOYER_PRIV_KEY, l1Provider);
 

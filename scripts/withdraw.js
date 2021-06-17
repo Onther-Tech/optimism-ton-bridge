@@ -17,6 +17,7 @@ const L1_ESCROW_ADDRESS = process.env.L1_ESCROW_ADDRESS;
 const L2_GATEWAY_ADDRESS = process.env.L2_GATEWAY_ADDRESS;
 const L1_TON_ADDRESS = process.env.L1_TON_ADDRESS;
 const L2_TON_ADDRESS = process.env.L2_TON_ADDRESS;
+
 const L1_MESSENGER_ADDRESS = process.env.L1_MESSENGER_ADDRESS;
 const L2_MESSENGER_ADDRESS = process.env.L2_MESSENGER_ADDRESS;
 
@@ -64,11 +65,10 @@ L2TON
 👉 user: ${(await l2TON.balanceOf(user)).toString()}
 `);
 
-  console.log('Withdrawing token from l2 to l1...');
+  console.log('Withdrawing token from l2 into l1...');
   const l2Tx = await l2Gateway.withdraw(withdrawAmount, L2_TX_OPTS);
   await l2Tx.wait();
 
-  // https://snyk.io/advisor/npm-package/@eth-optimism/watcher#package-footer
   console.log('Waiting for withdrawal to be relayed to L1...');
   const [ messageHash ] = await watcher.getMessageHashesFromL2Tx(l2Tx.hash);
   await watcher.getL1TransactionReceipt(messageHash);

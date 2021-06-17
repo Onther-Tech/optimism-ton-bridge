@@ -9,7 +9,7 @@ const L2_RPC_URL = 'https://testnet1.optimism.tokamak.network/';
 const l1Provider = new JsonRpcProvider(L1_RPC_URL);
 const l2Provider = new JsonRpcProvider(L2_RPC_URL);
 
-const L1_DEPLOYER_PRIV_KEY = process.env.RINKEBY_DEPLOYER_PRIV_KEY;
+const L1_DEPLOYER_PRIV_KEY = process.env.L1_DEPLOYER_PRIV_KEY;
 const L2_DEPLOYER_PRIV_KEY = process.env.L2_DEPLOYER_PRIV_KEY;
 const TEST_USER_KEY = process.env.TEST_USER_KEY;
 
@@ -76,8 +76,9 @@ async function main () {
 
   const authorized = await l2TON.authorized(l2Gateway.address);
   if (!authorized) {
-    console.log('Giving authorization...');
+    console.log('Updating authorization...');
     await waitForTx(l2TON.rely(l2Gateway.address, L2_TX_OPTS));
+    await waitForTx(l2TON.deny(l2Signer.address, L2_TX_OPTS));
   }
 
   const balance = await l1TON.balanceOf(user);
@@ -88,7 +89,7 @@ async function main () {
 
   const allowanceFromUser = await l1TON.allowance(user, l1Gateway.address);
   if (allowanceFromUser < depositAmount) {
-    console.log('Approving from user...');
+    console.log('Approving from token...');
     await waitForTx(l1TON.approve(l1Gateway.address, ethers.constants.MaxUint256, L1_TX_OPTS));
   }
 
@@ -104,11 +105,10 @@ L2TON
 👉 user: ${(await l2TON.balanceOf(user)).toString()}
 `);
 
-  console.log('Depositing token from l1 to l2...');
+  console.log('Depositing token from l1 into l2...');
   const l1Tx = await l1Gateway.deposit(depositAmount, L1_TX_OPTS);
   await l1Tx.wait();
 
-  // https://snyk.io/advisor/npm-package/@eth-optimism/watcher#package-footer
   console.log('Waiting for deposit to be relayed to L2...');
   const [ messageHash ] = await watcher.getMessageHashesFromL1Tx(l1Tx.hash);
   await watcher.getL2TransactionReceipt(messageHash);
@@ -123,7 +123,6 @@ L1TON
 
 L2TON
 👉 user: ${(await l2TON.balanceOf(user)).toString()}
-👉 totalSupply: ${(await l2TON.totalSupply()).toString()}
 `);
 }
 

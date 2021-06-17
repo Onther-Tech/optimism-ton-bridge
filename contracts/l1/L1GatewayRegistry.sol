@@ -3,7 +3,7 @@ pragma solidity >=0.7.6;
 contract L1GatewayRegistry {
     mapping(address => mapping(address => bool)) public registered;
 
-    event GatewayRegistered(address indexed gateway0, address indexed gateway1);
+    event GatewayRegistered(address indexed l1Gatway, address indexed l2Gatway);
 
     function register(address l1Gateway, address l2Gateway) external {
         require(l1Gateway != l2Gateway, "L1GatewayRegistry/identical-address");

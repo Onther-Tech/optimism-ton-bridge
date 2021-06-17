@@ -10,8 +10,7 @@
     "lint:js:fix": "eslint --ignore-path .gitignore . --fix",
     "lint:sol": "solhint 'contracts/**/*.sol'",
     "compile": "hardhat compile && hardhat compile --network optimism",
-    "deploy:kovan": "hardhat run scripts/deployKovan.js --network kovan",
-    "deploy:rinkeby": "hardhat run scripts/deployRinkeby.js --network rinkeby",
+    "deploy:rinkeby": "hardhat run scripts/deploy.js --network rinkeby",
     "deposit:rinkeby": "hardhat run scripts/deposit.js --network rinkeby",
     "withdraw:rinkeby": "hardhat run scripts/withdraw.js --network rinkeby",
     "test": "hardhat test"
