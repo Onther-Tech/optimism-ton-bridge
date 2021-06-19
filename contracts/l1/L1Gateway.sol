@@ -57,6 +57,18 @@ contract L1Gateway is Abs_L1TokenGateway {
         escrow = _escrow;
     }
 
+    function onApprove(
+        address owner,
+        address spender,
+        uint256 amount,
+        bytes calldata data
+    ) external returns (bool) {
+        require(msg.sender == address(l1ERC20), "L1Gateway/invalid-callback");
+
+        // @audit should we change visibility from external to public?
+        deposit(owner, amount);
+    }
+
     function close() external auth {
         isOpen = false;
     }
