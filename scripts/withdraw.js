@@ -16,7 +16,7 @@ const L2_TX_OPTS = {
 const L1_ESCROW_ADDRESS = process.env.L1_ESCROW_ADDRESS;
 const L2_GATEWAY_ADDRESS = process.env.L2_GATEWAY_ADDRESS;
 const L1_TON_ADDRESS = process.env.L1_TON_ADDRESS;
-const L2_TON_ADDRESS = process.env.L2_TON_ADDRESS;
+const L2_TOKEN_ADDRESS = process.env.L2_TOKEN_ADDRESS;
 
 const L1_MESSENGER_ADDRESS = process.env.L1_MESSENGER_ADDRESS;
 const L2_MESSENGER_ADDRESS = process.env.L2_MESSENGER_ADDRESS;
@@ -43,14 +43,14 @@ async function main () {
 
   const l1Escrow = await getContractAt(L1_ESCROW_ADDRESS, 'L1Escrow', l1Signer);
   const l1TON = await getContractAt(L1_TON_ADDRESS, 'L1TON', l1Signer);
-  const l2TON = await getL2ContractAt(L2_TON_ADDRESS, 'L2TON', l2Signer);
+  const l2Token = await getL2ContractAt(L2_TOKEN_ADDRESS, 'L2Token', l2Signer);
 
   const l2Gateway = await getL2ContractAt(L2_GATEWAY_ADDRESS, 'L2Gateway', l2Signer);
 
-  const balance = await l2TON.balanceOf(user);
+  const balance = await l2Token.balanceOf(user);
   if (balance < withdrawAmount) {
     console.log('Minting token...');
-    await waitForTx(l2TON.mint(user, withdrawAmount * 100, L2_TX_OPTS));
+    await waitForTx(l2Token.mint(user, withdrawAmount * 100, L2_TX_OPTS));
   }
 
   console.log(`
@@ -61,8 +61,8 @@ L1TON
 👉 user: ${(await l1TON.balanceOf(user)).toString()}
 👉 escrow: ${(await l1TON.balanceOf(l1Escrow.address)).toString()}
 
-L2TON
-👉 user: ${(await l2TON.balanceOf(user)).toString()}
+L2Token
+👉 user: ${(await l2Token.balanceOf(user)).toString()}
 `);
 
   console.log('Withdrawing token from l2 into l1...');
@@ -81,8 +81,8 @@ L1TON
 👉 user: ${(await l1TON.balanceOf(user)).toString()}
 👉 escrow: ${(await l1TON.balanceOf(l1Escrow.address)).toString()}
 
-L2TON
-👉 user: ${(await l2TON.balanceOf(user)).toString()}
+L2Token
+👉 user: ${(await l2Token.balanceOf(user)).toString()}
 `);
 }
 

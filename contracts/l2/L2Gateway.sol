@@ -3,12 +3,7 @@ pragma solidity >=0.7.6;
 import {
     Abs_L2DepositedToken
 } from "@eth-optimism/contracts/OVM/bridge/tokens/Abs_L2DepositedToken.sol";
-
-interface Mintable {
-    function mint(address account, uint256 amount) external;
-
-    function burn(address account, uint256 amount) external;
-}
+import {L2Token} from "./L2Token.sol";
 
 contract L2Gateway is Abs_L2DepositedToken {
     // --- Auth ---
@@ -32,16 +27,18 @@ contract L2Gateway is Abs_L2DepositedToken {
     event Rely(address indexed usr);
     event Deny(address indexed usr);
 
-    Mintable public immutable token;
+    L2Token public token;
     bool public isOpen = true;
 
-    constructor(address _l2CrossDomainMessenger, address _token)
-        Abs_L2DepositedToken(_l2CrossDomainMessenger)
-    {
+    constructor(
+        address _l2CrossDomainMessenger,
+        string memory _name,
+        string memory _symbol
+    ) Abs_L2DepositedToken(_l2CrossDomainMessenger) {
         authorized[msg.sender] = true;
         emit Rely(msg.sender);
 
-        token = Mintable(_token);
+        token = new L2Token(_name, _symbol);
     }
 
     function close() external auth {

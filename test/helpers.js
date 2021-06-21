@@ -21,7 +21,13 @@ async function deployMock (
   });
 }
 
+async function deployed (name, address, signerOrProvider) {
+  const factory = await ethers.getContractFactory(name);
+  return new ethers.Contract(address, factory.interface, signerOrProvider);
+}
+
 module.exports = {
   deploy,
   deployMock,
+  deployed,
 };

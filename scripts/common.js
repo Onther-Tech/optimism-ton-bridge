@@ -11,14 +11,13 @@ async function deployGatewayAndRegister (
   l1TxOpts,
   l2TxOpts,
 ) {
-  const l2TON = await deployContract(l2Deployer, await getL2ContractFactory('L2TON'), [l2TxOpts]);
-  console.log('L2TON:', l2TON.address);
-
   const l2Gateway = await deployContract(l2Deployer, await getL2ContractFactory('L2Gateway'), [
     l2XDomainMessengerAddress,
-    l2TON.address,
+    'ERC20 Token Layer 2',
+    'TOKEN-L2',
     l2TxOpts,
   ]);
+  console.log('L2Token:', await l2Gateway.token());
   console.log('L2Gateway:', l2Gateway.address);
 
   const l1Gateway = await deployContract(l1Deployer, await ethers.getContractFactory('L1Gateway'), [

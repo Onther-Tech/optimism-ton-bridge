@@ -18,7 +18,7 @@ const L1_GATEWAY_REGISTRY_ADDRESS = process.env.L1_GATEWAY_REGISTRY_ADDRESS;
 const L1_GATEWAY_ADDRESS = process.env.L1_GATEWAY_ADDRESS;
 const L2_GATEWAY_ADDRESS = process.env.L2_GATEWAY_ADDRESS;
 const L1_TON_ADDRESS = process.env.L1_TON_ADDRESS;
-const L2_TON_ADDRESS = process.env.L2_TON_ADDRESS;
+const L2_TOKEN_ADDRESS = process.env.L2_TOKEN_ADDRESS;
 const L1_MESSENGER_ADDRESS = process.env.L1_MESSENGER_ADDRESS;
 const L2_MESSENGER_ADDRESS = process.env.L2_MESSENGER_ADDRESS;
 
@@ -50,7 +50,7 @@ async function main () {
 
   const l1Escrow = await getContractAt(L1_ESCROW_ADDRESS, 'L1Escrow', l1Signer);
   const l1TON = await getContractAt(L1_TON_ADDRESS, 'L1TON', l1Signer);
-  const l2TON = await getL2ContractAt(L2_TON_ADDRESS, 'L2TON', l2Signer);
+  const l2Token = await getL2ContractAt(L2_TOKEN_ADDRESS, 'L2Token', l2Signer);
 
   const l1GatewayRegistry = await getContractAt(L1_GATEWAY_REGISTRY_ADDRESS, 'L1GatewayRegistry', l1Signer);
   const l1Gateway = await getContractAt(L1_GATEWAY_ADDRESS, 'L1Gateway', l1Signer);
@@ -74,13 +74,6 @@ async function main () {
     await waitForTx(l2Gateway.init(l1Gateway.address, L2_TX_OPTS));
   }
 
-  const authorized = await l2TON.authorized(l2Gateway.address);
-  if (!authorized) {
-    console.log('Updating authorization...');
-    await waitForTx(l2TON.rely(l2Gateway.address, L2_TX_OPTS));
-    await waitForTx(l2TON.deny(l2Signer.address, L2_TX_OPTS));
-  }
-
   const balance = await l1TON.balanceOf(user);
   if (balance < depositAmount) {
     console.log('Minting token...');
@@ -90,7 +83,7 @@ async function main () {
   const allowanceFromUser = await l1TON.allowance(user, l1Gateway.address);
   if (allowanceFromUser < depositAmount) {
     console.log('Approving from token...');
-    await waitForTx(l1TON.approve(l1Gateway.address, ethers.constants.MaxUint256, L1_TX_OPTS));
+    await waitForTx(l1TON.approve(l1Gateway.address, depositAmount, L1_TX_OPTS));
   }
 
   console.log(`
@@ -101,8 +94,8 @@ L1TON
 👉 user: ${(await l1TON.balanceOf(user)).toString()}
 👉 escrow: ${(await l1TON.balanceOf(l1Escrow.address)).toString()}
 
-L2TON
-👉 user: ${(await l2TON.balanceOf(user)).toString()}
+L2Token
+👉 user: ${(await l2Token.balanceOf(user)).toString()}
 `);
 
   console.log('Depositing token from l1 into l2...');
@@ -121,8 +114,8 @@ L1TON
 👉 user: ${(await l1TON.balanceOf(user)).toString()}
 👉 escrow: ${(await l1TON.balanceOf(l1Escrow.address)).toString()}
 
-L2TON
-👉 user: ${(await l2TON.balanceOf(user)).toString()}
+L2Token
+👉 user: ${(await l2Token.balanceOf(user)).toString()}
 `);
 }
 

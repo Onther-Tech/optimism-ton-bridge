@@ -1,6 +1,6 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
-const { deploy, deployMock } = require('../helpers');
+const { deploy, deployMock, deployed } = require('../helpers');
 
 const errorMessages = {
   invalidMessenger: 'OVM_XCHAIN: messenger contract unauthenticated',
@@ -9,53 +9,45 @@ const errorMessages = {
   notInitialized: 'Contract has not yet been initialized',
   bridgeClosed: 'L2Gateway/closed',
   notOwner: 'L2Gateway/not-authorized',
-  tonInsufficientBalanceToBurn: 'ERC20: burn amount exceeds balance',
-  tonNotAuthorized: 'L2TON/not-authorized',
+  insufficientBalanceToBurn: 'ERC20: burn amount exceeds balance',
 };
+
+const initialTotalSupply = 3000;
 
 describe('L2Gateway', () => {
   describe('finalizeDeposit', () => {
     const depositAmount = 100;
 
     it('mints new tokens', async () => {
-      const [_, l2MessengerImpersonator, user1] = await ethers.getSigners();
-      const { l2TON, l1GatewayMock, l2CrossDomainMessengerMock, l2Gateway } = await setupTest(l2MessengerImpersonator);
+      const [deployer, l2MessengerImpersonator, user1] = await ethers.getSigners();
+      const { l1GatewayMock, l2CrossDomainMessengerMock, l2Gateway, l2Token } =
+        await setupTest(deployer, l2MessengerImpersonator);
+
       l2CrossDomainMessengerMock.smocked.xDomainMessageSender.will.return.with(() => l1GatewayMock.address);
 
       await l2Gateway.connect(l2MessengerImpersonator).finalizeDeposit(user1.address, depositAmount);
 
-      expect(await l2TON.balanceOf(user1.address)).to.be.eq(depositAmount);
-      expect(await l2TON.totalSupply()).to.be.eq(depositAmount);
+      expect(await l2Token.balanceOf(user1.address)).to.be.eq(depositAmount);
+      expect(await l2Token.totalSupply()).to.be.eq(depositAmount);
     });
 
     it('completes deposits even when closed', async () => {
-      const [_, l2MessengerImpersonator, user1] = await ethers.getSigners();
-      const { l2TON, l1GatewayMock, l2CrossDomainMessengerMock, l2Gateway } = await setupTest(l2MessengerImpersonator);
+      const [deployer, l2MessengerImpersonator, user1] = await ethers.getSigners();
+      const { l1GatewayMock, l2CrossDomainMessengerMock, l2Gateway, l2Token } =
+        await setupTest(deployer, l2MessengerImpersonator);
       await l2Gateway.close();
       l2CrossDomainMessengerMock.smocked.xDomainMessageSender.will.return.with(() => l1GatewayMock.address);
 
       await l2Gateway.connect(l2MessengerImpersonator).finalizeDeposit(user1.address, depositAmount);
 
-      expect(await l2TON.balanceOf(user1.address)).to.be.eq(depositAmount);
-      expect(await l2TON.totalSupply()).to.be.eq(depositAmount);
-    });
-
-    // if bridge is closed properly this shouldn't happen
-    it('reverts when TON minting access was revoked', async () => {
-      const [_, l2MessengerImpersonator, user1] = await ethers.getSigners();
-      const { l2TON, l1GatewayMock, l2CrossDomainMessengerMock, l2Gateway } = await setupTest(l2MessengerImpersonator);
-      l2CrossDomainMessengerMock.smocked.xDomainMessageSender.will.return.with(() => l1GatewayMock.address);
-
-      await l2TON.deny(l2Gateway.address);
-
-      await expect(
-        l2Gateway.connect(l2MessengerImpersonator).finalizeDeposit(user1.address, depositAmount),
-      ).to.be.revertedWith(errorMessages.tonNotAuthorized);
+      expect(await l2Token.balanceOf(user1.address)).to.be.eq(depositAmount);
+      expect(await l2Token.totalSupply()).to.be.eq(depositAmount);
     });
 
     it('reverts when called not by XDomainMessenger', async () => {
-      const [_, l2MessengerImpersonator, user1, user2] = await ethers.getSigners();
-      const { l1GatewayMock, l2CrossDomainMessengerMock, l2Gateway } = await setupTest(l2MessengerImpersonator);
+      const [deployer, l2MessengerImpersonator, user1, user2] = await ethers.getSigners();
+      const { l1GatewayMock, l2CrossDomainMessengerMock, l2Gateway } =
+        await setupTest(deployer, l2MessengerImpersonator);
       l2CrossDomainMessengerMock.smocked.xDomainMessageSender.will.return.with(() => l1GatewayMock.address);
 
       await expect(l2Gateway.connect(user2).finalizeDeposit(user1.address, depositAmount)).to.be.revertedWith(
@@ -64,8 +56,8 @@ describe('L2Gateway', () => {
     });
 
     it('reverts when called by XDomainMessenger but not relying message from l1ERC20Gateway', async () => {
-      const [_, l2MessengerImpersonator, user1, user2] = await ethers.getSigners();
-      const { l2CrossDomainMessengerMock, l2Gateway } = await setupTest(l2MessengerImpersonator);
+      const [deployer, l2MessengerImpersonator, user1, user2] = await ethers.getSigners();
+      const { l2CrossDomainMessengerMock, l2Gateway } = await setupTest(deployer, l2MessengerImpersonator);
       l2CrossDomainMessengerMock.smocked.xDomainMessageSender.will.return.with(() => user2.address);
 
       await expect(
@@ -78,58 +70,58 @@ describe('L2Gateway', () => {
     const withdrawAmount = 100;
 
     it('sends xchain message and burns tokens', async () => {
-      const [_, l2MessengerImpersonator, user1] = await ethers.getSigners();
-      const { l2TON, l1GatewayMock, l2CrossDomainMessengerMock, l2Gateway } = await setupWithdrawTest(
+      const [deployer, l2MessengerImpersonator] = await ethers.getSigners();
+      const { l1GatewayMock, l2CrossDomainMessengerMock, l2Gateway, l2Token } = await setupWithdrawTest(
+        deployer,
         l2MessengerImpersonator,
-        user1,
       );
 
-      await l2Gateway.connect(user1).withdraw(withdrawAmount);
+      await l2Gateway.connect(deployer).withdraw(withdrawAmount);
       const withdrawCallToMessengerCall = l2CrossDomainMessengerMock.smocked.sendMessage.calls[0];
 
-      expect(await l2TON.balanceOf(user1.address)).to.equal(INITIAL_TOTAL_L1_SUPPLY - withdrawAmount);
-      expect(await l2TON.totalSupply()).to.equal(INITIAL_TOTAL_L1_SUPPLY - withdrawAmount);
+      expect(await l2Token.balanceOf(deployer.address)).to.equal(initialTotalSupply - withdrawAmount);
+      expect(await l2Token.totalSupply()).to.equal(initialTotalSupply - withdrawAmount);
 
       expect(withdrawCallToMessengerCall._target).to.equal(l1GatewayMock.address);
       expect(withdrawCallToMessengerCall._message).to.equal(
-        l1GatewayMock.interface.encodeFunctionData('finalizeWithdrawal', [user1.address, withdrawAmount]),
+        l1GatewayMock.interface.encodeFunctionData('finalizeWithdrawal', [deployer.address, withdrawAmount]),
       );
     });
 
     it('reverts when approval is too low', async () => {
-      const [_, l2MessengerImpersonator, user1, user2] = await ethers.getSigners();
-      const { l2TON, l2Gateway } = await setupWithdrawTest(
+      const [deployer, l2MessengerImpersonator, user1, user2] = await ethers.getSigners();
+      const { l2Token, l2Gateway } = await setupWithdrawTest(
+        deployer,
         l2MessengerImpersonator,
-        user1,
       );
-      await l2TON.connect(user1).approve(l2Gateway.address, 0);
+      await l2Token.connect(user1).approve(l2Gateway.address, 0);
 
       await expect(l2Gateway.connect(user2).withdraw(withdrawAmount)).to.be.revertedWith(
-        errorMessages.tonInsufficientBalanceToBurn,
+        errorMessages.insufficientBalanceToBurn,
       );
     });
 
     it('reverts when not enough funds', async () => {
-      const [_, l2MessengerImpersonator, user1, user2] = await ethers.getSigners();
+      const [deployer, l2MessengerImpersonator, user1] = await ethers.getSigners();
       const { l2Gateway } = await setupWithdrawTest(
+        deployer,
         l2MessengerImpersonator,
-        user1,
       );
 
-      await expect(l2Gateway.connect(user2).withdraw(withdrawAmount)).to.be.revertedWith(
-        errorMessages.tonInsufficientBalanceToBurn,
+      await expect(l2Gateway.connect(user1).withdraw(withdrawAmount)).to.be.revertedWith(
+        errorMessages.insufficientBalanceToBurn,
       );
     });
 
     it('reverts when bridge is closed', async () => {
-      const [owner, l2MessengerImpersonator, user1] = await ethers.getSigners();
+      const [deployer, l2MessengerImpersonator] = await ethers.getSigners();
       const { l2Gateway } = await setupWithdrawTest(
+        deployer,
         l2MessengerImpersonator,
-        user1,
       );
-      await l2Gateway.connect(owner).close();
+      await l2Gateway.connect(deployer).close();
 
-      await expect(l2Gateway.connect(user1).withdraw(withdrawAmount)).to.be.revertedWith(errorMessages.bridgeClosed);
+      await expect(l2Gateway.connect(deployer).withdraw(withdrawAmount)).to.be.revertedWith(errorMessages.bridgeClosed);
     });
   });
 
@@ -137,17 +129,17 @@ describe('L2Gateway', () => {
     const withdrawAmount = 100;
 
     it('sends xchain message and burns tokens', async () => {
-      const [_, l2MessengerImpersonator, receiver, user1] = await ethers.getSigners();
-      const { l2TON, l1GatewayMock, l2CrossDomainMessengerMock, l2Gateway } = await setupWithdrawTest(
+      const [deployer, l2MessengerImpersonator, receiver] = await ethers.getSigners();
+      const { l2Token, l1GatewayMock, l2CrossDomainMessengerMock, l2Gateway } = await setupWithdrawTest(
+        deployer,
         l2MessengerImpersonator,
-        user1,
       );
 
-      await l2Gateway.connect(user1).withdrawTo(receiver.address, withdrawAmount);
+      await l2Gateway.connect(deployer).withdrawTo(receiver.address, withdrawAmount);
       const withdrawCallToMessengerCall = l2CrossDomainMessengerMock.smocked.sendMessage.calls[0];
 
-      expect(await l2TON.balanceOf(user1.address)).to.equal(INITIAL_TOTAL_L1_SUPPLY - withdrawAmount);
-      expect(await l2TON.totalSupply()).to.equal(INITIAL_TOTAL_L1_SUPPLY - withdrawAmount);
+      expect(await l2Token.balanceOf(deployer.address)).to.equal(initialTotalSupply - withdrawAmount);
+      expect(await l2Token.totalSupply()).to.equal(initialTotalSupply - withdrawAmount);
 
       expect(withdrawCallToMessengerCall._target).to.equal(l1GatewayMock.address);
       expect(withdrawCallToMessengerCall._message).to.equal(
@@ -156,39 +148,39 @@ describe('L2Gateway', () => {
     });
 
     it('reverts when approval is too low', async () => {
-      const [_, l2MessengerImpersonator, receiver, user1, user2] = await ethers.getSigners();
-      const { l2TON, l2Gateway } = await setupWithdrawTest(
+      const [deployer, l2MessengerImpersonator, receiver, user1, user2] = await ethers.getSigners();
+      const { l2Token, l2Gateway } = await setupWithdrawTest(
+        deployer,
         l2MessengerImpersonator,
-        user1,
       );
-      await l2TON.connect(user1).approve(l2Gateway.address, 0);
+      await l2Token.connect(user1).approve(l2Gateway.address, 0);
 
       await expect(l2Gateway.connect(user2).withdrawTo(receiver.address, withdrawAmount)).to.be.revertedWith(
-        errorMessages.tonInsufficientBalanceToBurn,
+        errorMessages.insufficientBalanceToBurn,
       );
     });
 
     it('reverts when not enough funds', async () => {
-      const [_, l2MessengerImpersonator, receiver, user1, user2] = await ethers.getSigners();
+      const [deployer, l2MessengerImpersonator, receiver, user1] = await ethers.getSigners();
       const { l2Gateway } = await setupWithdrawTest(
+        deployer,
         l2MessengerImpersonator,
-        user1,
       );
 
-      await expect(l2Gateway.connect(user2).withdrawTo(receiver.address, withdrawAmount)).to.be.revertedWith(
-        errorMessages.tonInsufficientBalanceToBurn,
+      await expect(l2Gateway.connect(user1).withdrawTo(receiver.address, withdrawAmount)).to.be.revertedWith(
+        errorMessages.insufficientBalanceToBurn,
       );
     });
 
     it('reverts when bridge is closed', async () => {
-      const [owner, l2MessengerImpersonator, user1] = await ethers.getSigners();
+      const [deployer, l2MessengerImpersonator, user1] = await ethers.getSigners();
       const { l2Gateway } = await setupWithdrawTest(
+        deployer,
         l2MessengerImpersonator,
-        user1,
       );
-      await l2Gateway.connect(owner).close();
+      await l2Gateway.connect(deployer).close();
 
-      await expect(l2Gateway.connect(user1).withdrawTo(user1.address, withdrawAmount)).to.be.revertedWith(
+      await expect(l2Gateway.connect(deployer).withdrawTo(user1.address, withdrawAmount)).to.be.revertedWith(
         errorMessages.bridgeClosed,
       );
     });
@@ -196,67 +188,67 @@ describe('L2Gateway', () => {
 
   describe('init', () => {
     it('sets token gateway', async () => {
-      const [acc1, acc2, acc3] = await ethers.getSigners();
-      const l2Gateway = await deploy('L2Gateway', [acc1.address, acc2.address]);
+      const [acc1, acc2] = await ethers.getSigners();
+      const l2Gateway = await deploy('L2Gateway', [acc1.address, 'ERC20 Token Layer 2', 'TOKEN-L2']);
 
-      await l2Gateway.init(acc3.address);
+      await l2Gateway.init(acc2.address);
 
-      expect(await l2Gateway.l1TokenGateway()).to.eq(acc3.address);
+      expect(await l2Gateway.l1TokenGateway()).to.eq(acc2.address);
     });
 
     it('allows initialization once not multiple times', async () => {
-      const [acc1, acc2, acc3] = await ethers.getSigners();
-      const l2Gateway = await deploy('L2Gateway', [acc1.address, acc2.address]);
+      const [acc1, acc2] = await ethers.getSigners();
+      const l2Gateway = await deploy('L2Gateway', [acc1.address, 'ERC20 Token Layer 2', 'TOKEN-L2']);
 
-      await l2Gateway.init(acc3.address);
+      await l2Gateway.init(acc2.address);
 
-      await expect(l2Gateway.init(acc3.address)).to.be.revertedWith(errorMessages.alreadyInitialized);
+      await expect(l2Gateway.init(acc2.address)).to.be.revertedWith(errorMessages.alreadyInitialized);
     });
 
     it('doesn\'t allow calls to onlyInitialized functions before initialization', async () => {
-      const [acc1, acc2, acc3] = await ethers.getSigners();
+      const [acc1, acc2] = await ethers.getSigners();
 
-      const l2Gateway = await deploy('L2Gateway', [acc1.address, acc2.address]);
+      const l2Gateway = await deploy('L2Gateway', [acc1.address, 'ERC20 Token Layer 2', 'TOKEN-L2']);
 
       await expect(l2Gateway.withdraw('100')).to.be.revertedWith(errorMessages.notInitialized);
-      await expect(l2Gateway.withdrawTo(acc3.address, '100')).to.be.revertedWith(errorMessages.notInitialized);
-      await expect(l2Gateway.finalizeDeposit(acc3.address, '100')).to.be.revertedWith(errorMessages.notInitialized);
+      await expect(l2Gateway.withdrawTo(acc2.address, '100')).to.be.revertedWith(errorMessages.notInitialized);
+      await expect(l2Gateway.finalizeDeposit(acc2.address, '100')).to.be.revertedWith(errorMessages.notInitialized);
     });
   });
 
   describe('close()', () => {
     it('can be called by owner', async () => {
-      const [owner, l2MessengerImpersonator, user1] = await ethers.getSigners();
+      const [deployer, l2MessengerImpersonator] = await ethers.getSigners();
       const { l2Gateway } = await setupTest(
+        deployer,
         l2MessengerImpersonator,
-        user1,
       );
 
       expect(await l2Gateway.isOpen()).to.be.eq(true);
-      await l2Gateway.connect(owner).close();
+      await l2Gateway.connect(deployer).close();
 
       expect(await l2Gateway.isOpen()).to.be.eq(false);
     });
 
     it('can be called multiple times by the owner but nothing changes', async () => {
-      const [owner, l2MessengerImpersonator, user1] = await ethers.getSigners();
+      const [deployer, l2MessengerImpersonator, user1] = await ethers.getSigners();
       const { l2Gateway } = await setupTest(
+        deployer,
         l2MessengerImpersonator,
-        user1,
       );
 
-      await l2Gateway.connect(owner).close();
+      await l2Gateway.connect(deployer).close();
       expect(await l2Gateway.isOpen()).to.be.eq(false);
 
-      await l2Gateway.connect(owner).close();
+      await l2Gateway.connect(deployer).close();
       expect(await l2Gateway.isOpen()).to.be.eq(false);
     });
 
     it('reverts when called not by the owner', async () => {
-      const [_owner, l2MessengerImpersonator, user1] = await ethers.getSigners();
+      const [deployer, l2MessengerImpersonator, user1] = await ethers.getSigners();
       const { l2Gateway } = await setupTest(
+        deployer,
         l2MessengerImpersonator,
-        user1,
       );
 
       await expect(l2Gateway.connect(user1).close()).to.be.revertedWith(errorMessages.notOwner);
@@ -264,28 +256,32 @@ describe('L2Gateway', () => {
   });
 });
 
-async function setupTest (l2MessengerImpersonator) {
+async function setupTest (deployer, l2MessengerImpersonator) {
   const l2CrossDomainMessengerMock = await deployMock(
     'OVM_L2CrossDomainMessenger',
     l2MessengerImpersonator.address,
   );
-  const l2TON = await deploy('L2TON');
-  const l2Gateway = await deploy('L2Gateway', [l2CrossDomainMessengerMock.address, l2TON.address]);
+  const l2Gateway =
+    await deploy('L2Gateway', [l2CrossDomainMessengerMock.address, 'ERC20 Token Layer 2', 'TOKEN-L2']);
+  const l2Token = await deployed('L2Token', (await l2Gateway.token()), deployer);
   const l1GatewayMock = await deployMock('L1Gateway');
 
-  await l2TON.rely(l2Gateway.address);
   await l2Gateway.init(l1GatewayMock.address);
 
-  return { l2TON, l1GatewayMock, l2CrossDomainMessengerMock, l2Gateway };
+  return { l1GatewayMock, l2CrossDomainMessengerMock, l2Gateway, l2Token };
 }
 
-const INITIAL_TOTAL_L1_SUPPLY = 3000;
+async function setupWithdrawTest (deployer, l2MessengerImpersonator) {
+  const l2CrossDomainMessengerMock = await deployMock(
+    'OVM_L2CrossDomainMessenger',
+    l2MessengerImpersonator.address,
+  );
+  const l2Gateway =
+    await deploy('L2GatewayMock', [l2CrossDomainMessengerMock.address, 'ERC20 Token Layer 2', 'TOKEN-L2']);
+  const l2Token = await deployed('L2Token', (await l2Gateway.token()), deployer);
+  const l1GatewayMock = await deployMock('L1Gateway');
 
-async function setupWithdrawTest (l2MessengerImpersonator, user1) {
-  const contracts = await setupTest(l2MessengerImpersonator);
+  await l2Gateway.init(l1GatewayMock.address);
 
-  await contracts.l2TON.mint(user1.address, INITIAL_TOTAL_L1_SUPPLY);
-  await contracts.l2TON.connect(user1).approve(contracts.l2Gateway.address, ethers.constants.MaxUint256);
-
-  return contracts;
+  return { l1GatewayMock, l2CrossDomainMessengerMock, l2Gateway, l2Token };
 }
