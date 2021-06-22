@@ -5,6 +5,7 @@ pragma solidity >=0.7.6;
 import {
     Abs_L1TokenGateway
 } from "@eth-optimism/contracts/OVM/bridge/tokens/Abs_L1TokenGateway.sol";
+import {ERC165} from "@openzeppelin/contracts/introspection/ERC165.sol";
 
 interface TokenLike {
     function transfer(address _to, uint256 _value)
@@ -18,7 +19,7 @@ interface TokenLike {
     ) external returns (bool success);
 }
 
-contract L1Gateway is Abs_L1TokenGateway {
+contract L1Gateway is Abs_L1TokenGateway, ERC165 {
     // --- Auth ---
     mapping(address => bool) public authorized;
 
@@ -42,6 +43,7 @@ contract L1Gateway is Abs_L1TokenGateway {
 
     TokenLike public immutable l1ERC20;
     address public immutable escrow;
+
     bool public isOpen = true;
 
     constructor(
@@ -50,6 +52,8 @@ contract L1Gateway is Abs_L1TokenGateway {
         address _l1Messenger,
         address _escrow
     ) Abs_L1TokenGateway(_l2Gateway, _l1Messenger) {
+        _registerInterface(L1Gateway(this).onApprove.selector);
+
         authorized[msg.sender] = true;
         emit Rely(msg.sender);
 
@@ -59,6 +63,22 @@ contract L1Gateway is Abs_L1TokenGateway {
 
     function close() external auth {
         isOpen = false;
+    }
+
+    function onApprove(
+        address owner,
+        address,
+        uint256 amount,
+        bytes calldata
+    ) external returns (bool) {
+        require(
+            msg.sender == address(l1ERC20),
+            "L1Gateway/invalid-sender"
+        );
+
+        _initiateDeposit(owner, owner, amount);
+
+        return true;
     }
 
     function _handleInitiateDeposit(

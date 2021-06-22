@@ -8,6 +8,7 @@ const depositAmount = 100;
 const errorMessages = {
   bridgeClosed: 'L1Gateway/closed',
   notOwner: 'L1Gateway/not-authorized',
+  invalidSender: 'L1Gateway/invalid-sender',
   insufficientAllowance: 'ERC20: transfer amount exceeds allowance',
   insufficientBalance: 'ERC20: transfer amount exceeds balance',
   invalidMessenger: 'OVM_XCHAIN: messenger contract unauthenticated',
@@ -146,6 +147,42 @@ describe('L1Gateway', () => {
       await expect(l1Gateway.connect(user1).depositTo(user1.address, depositAmount)).to.be.revertedWith(
         errorMessages.bridgeClosed,
       );
+    });
+  });
+
+  describe('onApprove()', () => {
+    it('deposits funds after approval', async () => {
+      const [escrow, l1MessengerImpersonator, user1] = await ethers.getSigners();
+      const { l1TON, l1Gateway, l1CrossDomainMessengerMock, l2GatewayMock } = await setupTest(
+        escrow,
+        l1MessengerImpersonator,
+        user1,
+      );
+
+      await l1TON.connect(user1).approveAndCall(l1Gateway.address, depositAmount, '0x00');
+      const depositCallToMessengerCall = l1CrossDomainMessengerMock.smocked.sendMessage.calls[0];
+
+      expect(await l1TON.balanceOf(user1.address)).to.be.eq(initialTotalL1Supply - depositAmount);
+      expect(await l1TON.balanceOf(l1Gateway.address)).to.be.eq(0);
+      expect(await l1TON.balanceOf(escrow.address)).to.be.eq(depositAmount);
+
+      expect(depositCallToMessengerCall._target).to.equal(l2GatewayMock.address);
+      expect(depositCallToMessengerCall._message).to.equal(
+        l2GatewayMock.interface.encodeFunctionData('finalizeDeposit', [user1.address, depositAmount]),
+      );
+    });
+
+    it('reverts when it is invalid sender', async () => {
+      const [escrow, l1MessengerImpersonator, user1] = await ethers.getSigners();
+      const { l1Gateway } = await setupTest(
+        escrow,
+        l1MessengerImpersonator,
+        user1,
+      );
+      const otherToken = await deploy('L1TON');
+
+      await expect(otherToken.connect(user1).approveAndCall(l1Gateway.address, depositAmount, '0x00'))
+        .to.be.revertedWith(errorMessages.invalidSender);
     });
   });
 
