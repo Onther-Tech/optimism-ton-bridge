@@ -7,7 +7,6 @@ const errorMessages = {
   invalidXDomainMessageOriginator: 'OVM_XCHAIN: wrong sender of cross-domain message',
   alreadyInitialized: 'Contract has already been initialized',
   notInitialized: 'Contract has not yet been initialized',
-  bridgeClosed: 'L2Gateway/closed',
   notOwner: 'L2Gateway/not-authorized',
   insufficientBalanceToBurn: 'ERC20: burn amount exceeds balance',
 };
@@ -23,19 +22,6 @@ describe('L2Gateway', () => {
       const { l1GatewayMock, l2CrossDomainMessengerMock, l2Gateway, l2Token } =
         await setupTest(deployer, l2MessengerImpersonator);
 
-      l2CrossDomainMessengerMock.smocked.xDomainMessageSender.will.return.with(() => l1GatewayMock.address);
-
-      await l2Gateway.connect(l2MessengerImpersonator).finalizeDeposit(user1.address, depositAmount);
-
-      expect(await l2Token.balanceOf(user1.address)).to.be.eq(depositAmount);
-      expect(await l2Token.totalSupply()).to.be.eq(depositAmount);
-    });
-
-    it('completes deposits even when closed', async () => {
-      const [deployer, l2MessengerImpersonator, user1] = await ethers.getSigners();
-      const { l1GatewayMock, l2CrossDomainMessengerMock, l2Gateway, l2Token } =
-        await setupTest(deployer, l2MessengerImpersonator);
-      await l2Gateway.close();
       l2CrossDomainMessengerMock.smocked.xDomainMessageSender.will.return.with(() => l1GatewayMock.address);
 
       await l2Gateway.connect(l2MessengerImpersonator).finalizeDeposit(user1.address, depositAmount);
@@ -112,17 +98,6 @@ describe('L2Gateway', () => {
         errorMessages.insufficientBalanceToBurn,
       );
     });
-
-    it('reverts when bridge is closed', async () => {
-      const [deployer, l2MessengerImpersonator] = await ethers.getSigners();
-      const { l2Gateway } = await setupWithdrawTest(
-        deployer,
-        l2MessengerImpersonator,
-      );
-      await l2Gateway.connect(deployer).close();
-
-      await expect(l2Gateway.connect(deployer).withdraw(withdrawAmount)).to.be.revertedWith(errorMessages.bridgeClosed);
-    });
   });
 
   describe('withdrawTo', () => {
@@ -171,19 +146,6 @@ describe('L2Gateway', () => {
         errorMessages.insufficientBalanceToBurn,
       );
     });
-
-    it('reverts when bridge is closed', async () => {
-      const [deployer, l2MessengerImpersonator, user1] = await ethers.getSigners();
-      const { l2Gateway } = await setupWithdrawTest(
-        deployer,
-        l2MessengerImpersonator,
-      );
-      await l2Gateway.connect(deployer).close();
-
-      await expect(l2Gateway.connect(deployer).withdrawTo(user1.address, withdrawAmount)).to.be.revertedWith(
-        errorMessages.bridgeClosed,
-      );
-    });
   });
 
   describe('init', () => {
@@ -213,45 +175,6 @@ describe('L2Gateway', () => {
       await expect(l2Gateway.withdraw('100')).to.be.revertedWith(errorMessages.notInitialized);
       await expect(l2Gateway.withdrawTo(acc2.address, '100')).to.be.revertedWith(errorMessages.notInitialized);
       await expect(l2Gateway.finalizeDeposit(acc2.address, '100')).to.be.revertedWith(errorMessages.notInitialized);
-    });
-  });
-
-  describe('close()', () => {
-    it('can be called by owner', async () => {
-      const [deployer, l2MessengerImpersonator] = await ethers.getSigners();
-      const { l2Gateway } = await setupTest(
-        deployer,
-        l2MessengerImpersonator,
-      );
-
-      expect(await l2Gateway.isOpen()).to.be.eq(true);
-      await l2Gateway.connect(deployer).close();
-
-      expect(await l2Gateway.isOpen()).to.be.eq(false);
-    });
-
-    it('can be called multiple times by the owner but nothing changes', async () => {
-      const [deployer, l2MessengerImpersonator, user1] = await ethers.getSigners();
-      const { l2Gateway } = await setupTest(
-        deployer,
-        l2MessengerImpersonator,
-      );
-
-      await l2Gateway.connect(deployer).close();
-      expect(await l2Gateway.isOpen()).to.be.eq(false);
-
-      await l2Gateway.connect(deployer).close();
-      expect(await l2Gateway.isOpen()).to.be.eq(false);
-    });
-
-    it('reverts when called not by the owner', async () => {
-      const [deployer, l2MessengerImpersonator, user1] = await ethers.getSigners();
-      const { l2Gateway } = await setupTest(
-        deployer,
-        l2MessengerImpersonator,
-      );
-
-      await expect(l2Gateway.connect(user1).close()).to.be.revertedWith(errorMessages.notOwner);
     });
   });
 });

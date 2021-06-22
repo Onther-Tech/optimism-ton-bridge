@@ -2,12 +2,11 @@
 
 pragma solidity >=0.7.6;
 
-import { L1Escrow } from "./L1Escrow.sol";
-import { L1Gateway, TokenLike } from "./L1Gateway.sol";
-import { L1GatewayRegistry } from "./L1GatewayRegistry.sol";
+import {L1Escrow} from "./L1Escrow.sol";
+import {L1Gateway, TokenLike} from "./L1Gateway.sol";
+import {L1GatewayRegistry} from "./L1GatewayRegistry.sol";
 
 contract L1GatewayFactory {
-    address public owner;
     L1GatewayRegistry public registry;
 
     event Created(address indexed l1Gateway);
@@ -18,7 +17,6 @@ contract L1GatewayFactory {
             "GatewayFactory/zero-address"
         );
 
-        owner = msg.sender;
         registry = _registry;
     }
 
@@ -40,11 +38,5 @@ contract L1GatewayFactory {
         );
 
         emit Created(address(l1Gateway));
-    }
-
-    function close(L1Gateway l1Gateway) external {
-        require(msg.sender == owner, "GatewayFactory/not-owner");
-
-        l1Gateway.close();
     }
 }

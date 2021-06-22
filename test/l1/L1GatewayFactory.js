@@ -52,10 +52,6 @@ describe('GatewayFactory', () => {
           errorMessages.notAuthorized,
         );
     });
-
-    it('close', async () => {
-      // TODO
-    });
   });
 });
 

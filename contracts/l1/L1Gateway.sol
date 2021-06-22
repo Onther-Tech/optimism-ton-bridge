@@ -20,31 +20,8 @@ interface TokenLike {
 }
 
 contract L1Gateway is Abs_L1TokenGateway, ERC165 {
-    // --- Auth ---
-    mapping(address => bool) public authorized;
-
-    function rely(address usr) external auth {
-        authorized[usr] = true;
-        emit Rely(usr);
-    }
-
-    function deny(address usr) external auth {
-        authorized[usr] = false;
-        emit Deny(usr);
-    }
-
-    modifier auth {
-        require(authorized[msg.sender], "L1Gateway/not-authorized");
-        _;
-    }
-
-    event Rely(address indexed usr);
-    event Deny(address indexed usr);
-
     TokenLike public immutable l1ERC20;
     address public immutable escrow;
-
-    bool public isOpen = true;
 
     constructor(
         TokenLike _l1ERC20,
@@ -54,15 +31,8 @@ contract L1Gateway is Abs_L1TokenGateway, ERC165 {
     ) Abs_L1TokenGateway(_l2Gateway, _l1Messenger) {
         _registerInterface(L1Gateway(this).onApprove.selector);
 
-        authorized[msg.sender] = true;
-        emit Rely(msg.sender);
-
         l1ERC20 = _l1ERC20;
         escrow = _escrow;
-    }
-
-    function close() external auth {
-        isOpen = false;
     }
 
     function onApprove(
@@ -71,10 +41,7 @@ contract L1Gateway is Abs_L1TokenGateway, ERC165 {
         uint256 amount,
         bytes calldata
     ) external returns (bool) {
-        require(
-            msg.sender == address(l1ERC20),
-            "L1Gateway/invalid-sender"
-        );
+        require(msg.sender == address(l1ERC20), "L1Gateway/invalid-sender");
 
         _initiateDeposit(owner, owner, amount);
 
@@ -86,11 +53,7 @@ contract L1Gateway is Abs_L1TokenGateway, ERC165 {
         address,
         uint256 _amount
     ) internal override {
-        require(isOpen, "L1Gateway/closed");
-
-        // NOTE: specific for TON token
-        l1ERC20.transferFrom(_from, address(this), _amount);
-
+        l1ERC20.transferFrom(_from, address(this), _amount); // NOTE: specific for TON token
         l1ERC20.transfer(escrow, _amount);
     }
 
@@ -98,9 +61,7 @@ contract L1Gateway is Abs_L1TokenGateway, ERC165 {
         internal
         override
     {
-        // NOTE: specific for TON token
-        l1ERC20.transferFrom(escrow, address(this), _amount);
-
+        l1ERC20.transferFrom(escrow, address(this), _amount); // NOTE: specific for TON token
         l1ERC20.transfer(_to, _amount);
     }
 }
