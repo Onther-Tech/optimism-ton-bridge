@@ -1,6 +1,48 @@
 const { ethers } = require('hardhat');
 const { deployContract, getL2ContractFactory } = require('../test-e2e/helpers/utils');
 
+async function deployBridge (
+  l1Deployer,
+  l2Deployer,
+  l1XDomainMessengerAddress,
+  l2XDomainMessengerAddress,
+  l1TxOpts,
+  l2TxOpts,
+) {
+  const l1TokenNoOwnership = await deployContract(
+    l1Deployer,
+    await ethers.getContractFactory('ERC20NoOwnership'),
+    [l1TxOpts],
+  );
+  console.log('l1TokenNoOwnership:', l1TokenNoOwnership.address);
+
+  const l2TokenNoOwnership = await deployContract(
+    l2Deployer,
+    await getL2ContractFactory('ERC20NoOwnership'),
+    [l2TxOpts],
+  );
+  console.log('l2TokenNoOwnership:', l2TokenNoOwnership.address);
+
+  const l1StandardBridge = await deployContract(
+    l1Deployer,
+    await ethers.getContractFactory('OVM_L1StandardBridge'),
+    [l1TxOpts],
+  );
+  console.log('l1StandardBridge:', l1StandardBridge.address);
+
+  const l2StandardBridge = await deployContract(
+    l2Deployer,
+    await getL2ContractFactory('OVM_L2StandardBridge'),
+    [l2XDomainMessengerAddress, l1StandardBridge.address, l2TxOpts],
+  );
+  console.log('l2StandardBridge:', l2StandardBridge.address);
+
+  await l1StandardBridge.initialize(l1XDomainMessengerAddress, l2StandardBridge.address, {
+    gasLimit: 8000000,
+    gasPrice: 1000000000, // 1 gwei
+  });
+}
+
 async function deployGatewayAndRegister (
   l1Deployer,
   l2Deployer,
@@ -39,5 +81,6 @@ async function deploy (deployer, l1Contract, l1TxOpts) {
 
 module.exports = {
   deploy,
+  deployBridge,
   deployGatewayAndRegister,
 };
