@@ -16,15 +16,15 @@ const L1_DEPLOYER_PRIV_KEY = process.env.L1_DEPLOYER_PRIV_KEY;
 const L2_DEPLOYER_PRIV_KEY = process.env.L2_DEPLOYER_PRIV_KEY;
 const TEST_USER_KEY = process.env.TEST_USER_KEY;
 
-const L1_TOKEN = process.env.L1_TOKEN;
-const L2_TOKEN = process.env.L2_TOKEN;
+const L1_TOKEN_ADDRESS = process.env.L1_TOKEN_ADDRESS;
+const L2_TOKEN_ADDRESS = process.env.L2_TOKEN_ADDRESS;
 const L1_BRIDGE_ADDRESS = process.env.L1_BRIDGE_ADDRESS;
 const L2_BRIDGE_ADDRESS = process.env.L2_BRIDGE_ADDRESS;
 const L1_MESSENGER_ADDRESS = process.env.L1_MESSENGER_ADDRESS;
 const L2_MESSENGER_ADDRESS = process.env.L2_MESSENGER_ADDRESS;
 
 if (!L1_DEPLOYER_PRIV_KEY || !L2_DEPLOYER_PRIV_KEY || !TEST_USER_KEY ||
-    !L1_TOKEN || !L2_TOKEN ||
+    !L1_TOKEN_ADDRESS || !L2_TOKEN_ADDRESS ||
     !L1_BRIDGE_ADDRESS || !L2_BRIDGE_ADDRESS ||
     !L1_MESSENGER_ADDRESS || !L2_MESSENGER_ADDRESS
 ) {
@@ -57,8 +57,8 @@ async function main () {
   const l1Signer = new ethers.Wallet(L1_DEPLOYER_PRIV_KEY, l1Provider);
   const l2Signer = new ethers.Wallet(L2_DEPLOYER_PRIV_KEY, l2Provider);
 
-  const l1Token = await getContractAt(L1_TOKEN, 'ERC20NoOwnership', l1Signer);
-  const l2Token = await getL2ContractAt(L2_TOKEN, 'ERC20NoOwnership', l2Signer);
+  const l1Token = await getContractAt(L1_TOKEN_ADDRESS, 'ERC20NoOwnership', l1Signer);
+  const l2Token = await getL2ContractAt(L2_TOKEN_ADDRESS, 'ERC20NoOwnership', l2Signer);
   const l1Bridge = await getContractAt(L1_BRIDGE_ADDRESS, 'OVM_L1StandardBridge', l1Signer);
 
   const balance = await l1Token.balanceOf(user);
