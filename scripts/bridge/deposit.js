@@ -58,7 +58,7 @@ async function main () {
   const l2Signer = new ethers.Wallet(L2_DEPLOYER_PRIV_KEY, l2Provider);
 
   const l1Token = await getContractAt(L1_TOKEN_ADDRESS, 'ERC20NoOwnership', l1Signer);
-  const l2Token = await getL2ContractAt(L2_TOKEN_ADDRESS, 'ERC20NoOwnership', l2Signer);
+  const l2Token = await getL2ContractAt(L2_TOKEN_ADDRESS, 'L2ERC20', l2Signer);
   const l1Bridge = await getContractAt(L1_BRIDGE_ADDRESS, 'OVM_L1StandardBridge', l1Signer);
 
   const balance = await l1Token.balanceOf(user);
@@ -77,7 +77,7 @@ async function main () {
 =====================
 before deposit 👇👇👇
 =====================
-L1TON
+L1Token
 👉 user: ${(await l1Token.balanceOf(user)).toString()}
 👉 l1-bridge: ${(await l1Token.balanceOf(l1Bridge.address)).toString()}
 
@@ -105,7 +105,7 @@ L2Token
 =====================
 after deposit 👇👇👇
 =====================
-L1TON
+L1Token
 👉 user: ${(await l1Token.balanceOf(user)).toString()}
 👉 l1-bridge: ${(await l1Token.balanceOf(l1Bridge.address)).toString()}
 

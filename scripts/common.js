@@ -14,28 +14,28 @@ async function deployBridge (
     await ethers.getContractFactory('ERC20NoOwnership'),
     [l1TxOpts],
   );
-  console.log('l1TokenNoOwnership:', l1TokenNoOwnership.address);
-
-  const l2TokenNoOwnership = await deployContract(
-    l2Deployer,
-    await getL2ContractFactory('ERC20NoOwnership'),
-    [l2TxOpts],
-  );
-  console.log('l2TokenNoOwnership:', l2TokenNoOwnership.address);
+  console.log(`L1_TOKEN_ADDRESS=${l1TokenNoOwnership.address}`);
 
   const l1StandardBridge = await deployContract(
     l1Deployer,
     await ethers.getContractFactory('OVM_L1StandardBridge'),
     [l1TxOpts],
   );
-  console.log('l1StandardBridge:', l1StandardBridge.address);
+  console.log(`L1_BRIDGE_ADDRESS=${l1StandardBridge.address}`);
 
   const l2StandardBridge = await deployContract(
     l2Deployer,
     await getL2ContractFactory('OVM_L2StandardBridge'),
     [l2XDomainMessengerAddress, l1StandardBridge.address, l2TxOpts],
   );
-  console.log('l2StandardBridge:', l2StandardBridge.address);
+  console.log(`L2_BRIDGE_ADDRESS=${l2StandardBridge.address}`);
+
+  const l2ERC20 = await deployContract(
+    l2Deployer,
+    await getL2ContractFactory('L2ERC20'),
+    [l2StandardBridge.address, l1TokenNoOwnership.address, l2TxOpts],
+  );
+  console.log(`L2_TOKEN_ADDRESS=${l2ERC20.address}`);
 
   await l1StandardBridge.initialize(l1XDomainMessengerAddress, l2StandardBridge.address, {
     gasLimit: 8000000,

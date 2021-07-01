@@ -2,6 +2,7 @@ require('@eth-optimism/hardhat-ovm');
 require('@nomiclabs/hardhat-waffle');
 require('dotenv').config();
 
+const DEVELOPMENT = process.env.DEVELOPMENT;
 const DEPLOYER_PRIV_KEY = process.env.L1_DEPLOYER_PRIV_KEY;
 
 module.exports = {
@@ -15,7 +16,7 @@ module.exports = {
       accounts: [`0x${DEPLOYER_PRIV_KEY}`],
     },
     optimism: {
-      url: 'https://testnet1.optimism.tokamak.network',
+      url: DEVELOPMENT ? 'http://127.0.0.1:8545' : 'https://testnet1.optimism.tokamak.network',
       ovm: true,
     },
   },
